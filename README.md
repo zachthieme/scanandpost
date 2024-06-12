@@ -115,13 +115,6 @@ Assuming you have two HID barcode scanners connected, and you want to post scann
    SPCBarcodeService interactive
    ```
 
-Or install and start it as a Windows service:
-
-```sh
-SPCBarcodeService install
-net start SPCBarcodeService
-```
-
 ### Open Issues
 
 - Service fails to start - not sure why it fails as it dies before logging starts up
