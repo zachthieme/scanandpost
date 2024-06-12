@@ -34,7 +34,7 @@ Create a `config.json` file with the following structure:
 2. Navigate to the directory containing `main.go`.
 3. Build the executable:
    ```sh
-   go build -o HIDScannerService main.go
+   go build -o SPCBarcodeService main.go
    ```
 
 #### Running the Application
@@ -46,7 +46,7 @@ You can run the application in interactive mode or install it as a Windows servi
 To run the application in interactive mode, simply execute the built binary:
 
 ```sh
-HIDScannerService
+SPCBarcodeService
 ```
 
 ##### Windows Service Mode
@@ -56,24 +56,24 @@ To install, start, stop, and uninstall the application as a Windows service, use
 1. **Install the service**:
 
    ```sh
-   HIDScannerService install
+   SPCBarcodeService install
    ```
 
 2. **Start the service**:
 
    ```sh
-   net start HIDScannerService
+   net start SPCBarcodeService
    ```
 
 3. **Stop the service**:
 
    ```sh
-   net stop HIDScannerService
+   net stop SPCBarcodeService
    ```
 
 4. **Uninstall the service**:
    ```sh
-   HIDScannerService uninstall
+   SPCBarcodeService uninstall
    ```
 
 ### Logging and Error Handling
@@ -105,19 +105,19 @@ Assuming you have two HID barcode scanners connected, and you want to post scann
 2. Build the executable:
 
    ```sh
-   go build -o HIDScannerService main.go
+   go build -o SPCBarcodeService main.go
    ```
 
 3. Run the application in interactive mode:
    ```sh
-   HIDScannerService
+   SPCBarcodeService
    ```
 
 Or install and start it as a Windows service:
 
 ```sh
-HIDScannerService install
-net start HIDScannerService
+SPCBarcodeService install
+net start SPCBarcodeService
 ```
 
 ### Troubleshooting
