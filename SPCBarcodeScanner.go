@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/karalabe/hid"
 	"github.com/kardianos/service"
@@ -87,7 +88,7 @@ func logFailure(payload Payload) {
 }
 
 // scanDevice reads the data from a HID device and sends the payload to the channel
-func scanDevice(deviceID int, payloadCh chan Payload) {
+func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 	devices := hid.Enumerate(0, 0)
 	if deviceID >= len(devices) {
 		log.Printf("No device found for deviceID %d\n", deviceID)
@@ -122,7 +123,7 @@ func scanDevice(deviceID int, payloadCh chan Payload) {
 // startScanning starts scanning from multiple devices
 func startScanning(config *Config, payloadCh chan Payload) {
 	for i := 0; i < config.NumberOfScanners; i++ {
-		go scanDevice(i, payloadCh)
+		go scanDevice(config, i, payloadCh)
 	}
 }
 
@@ -169,9 +170,9 @@ func setupLogging(serviceMode bool) {
 
 func main() {
 	svcConfig := &service.Config{
-		Name:        "SPCBarcodeService",
-		DisplayName: "SPC Barcode Service",
-		Description: "Service for reading HID barcode scanner output and posting to an API",
+		Name:        "HIDScannerService",
+		DisplayName: "HID Scanner Service",
+		Description: "Service for reading HID scanner output and posting to an API",
 	}
 
 	svc := &Service{}
@@ -180,28 +181,30 @@ func main() {
 		log.Fatalf("Error creating service: %v\n", err)
 	}
 
-	serviceMode := len(os.Args) > 1
-
-	if serviceMode {
-		if os.Args[1] == "install" {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "install":
 			err = s.Install()
 			if err != nil {
 				log.Fatalf("Error installing service: %v\n", err)
 			}
 			fmt.Println("Service installed successfully.")
 			return
-		} else if os.Args[1] == "uninstall" {
+		case "uninstall":
 			err = s.Uninstall()
 			if err != nil {
 				log.Fatalf("Error uninstalling service: %v\n", err)
 			}
 			fmt.Println("Service uninstalled successfully.")
 			return
+		case "interactive":
+			setupLogging(false)
+			svc.runService()
+			return
 		}
 	}
 
-	setupLogging(serviceMode)
-
+	setupLogging(true)
 	err = s.Run()
 	if err != nil {
 		log.Fatalf("Error running service: %v\n", err)
