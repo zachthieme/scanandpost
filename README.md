@@ -1,4 +1,4 @@
-## HID Scanner Service Documentation
+## Barcode Scanner Service Documentation
 
 ### Overview
 
