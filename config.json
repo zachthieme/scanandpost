@@ -1,0 +1,4 @@
+{
+  "apiEndpoint": "http://example.com/api",
+  "numberOfScanners": 2
+}
