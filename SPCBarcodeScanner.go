@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/karalabe/hid"
 	"github.com/kardianos/service"
@@ -18,6 +19,7 @@ import (
 type Config struct {
 	APIEndpoint      string `json:"apiEndpoint"`
 	NumberOfScanners int    `json:"numberOfScanners"`
+	RescanInterval   int    `json:"rescanInterval"`
 }
 
 // Payload represents the data to be sent to the API
@@ -87,34 +89,38 @@ func logFailure(payload Payload) {
 }
 
 // scanDevice reads the data from a HID device and sends the payload to the channel
-func scanDevice(deviceID int, payloadCh chan Payload) {
-	devices := hid.Enumerate(0, 0)
-	if deviceID >= len(devices) {
-		log.Printf("No device found for deviceID %d\n", deviceID)
-		return
-	}
-
-	device, err := devices[deviceID].Open()
-	if err != nil {
-		log.Printf("Error opening device: %v\n", err)
-		return
-	}
-	defer device.Close()
-
-	buf := make([]byte, 256)
+func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 	for {
-		n, err := device.Read(buf)
-		if err != nil {
-			log.Printf("Error reading from device: %v\n", err)
-			return
+		devices := hid.Enumerate(0, 0)
+		if deviceID >= len(devices) {
+			log.Printf("No device found for deviceID %d. Rescanning in %d seconds...\n", deviceID, config.RescanInterval)
+			time.Sleep(time.Duration(config.RescanInterval) * time.Second)
+			continue
 		}
 
-		if n > 0 {
-			payload := Payload{
-				ItemID:     string(buf[:n]),
-				DeviceType: fmt.Sprintf("scanner%d", deviceID),
+		device, err := devices[deviceID].Open()
+		if err != nil {
+			log.Printf("Error opening device: %v\n", err)
+			time.Sleep(time.Duration(config.RescanInterval) * time.Second)
+			continue
+		}
+		defer device.Close()
+
+		buf := make([]byte, 256)
+		for {
+			n, err := device.Read(buf)
+			if err != nil {
+				log.Printf("Error reading from device: %v\n", err)
+				break
 			}
-			payloadCh <- payload
+
+			if n > 0 {
+				payload := Payload{
+					ItemID:     string(buf[:n]),
+					DeviceType: fmt.Sprintf("scanner%d", deviceID),
+				}
+				payloadCh <- payload
+			}
 		}
 	}
 }
@@ -122,7 +128,7 @@ func scanDevice(deviceID int, payloadCh chan Payload) {
 // startScanning starts scanning from multiple devices
 func startScanning(config *Config, payloadCh chan Payload) {
 	for i := 0; i < config.NumberOfScanners; i++ {
-		go scanDevice(i, payloadCh)
+		go scanDevice(config, i, payloadCh)
 	}
 }
 
