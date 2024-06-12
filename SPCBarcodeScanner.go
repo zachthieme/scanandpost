@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/karalabe/hid"
 	"github.com/kardianos/service"
@@ -88,7 +87,7 @@ func logFailure(payload Payload) {
 }
 
 // scanDevice reads the data from a HID device and sends the payload to the channel
-func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
+func scanDevice(deviceID int, payloadCh chan Payload) {
 	devices := hid.Enumerate(0, 0)
 	if deviceID >= len(devices) {
 		log.Printf("No device found for deviceID %d\n", deviceID)
@@ -123,7 +122,7 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 // startScanning starts scanning from multiple devices
 func startScanning(config *Config, payloadCh chan Payload) {
 	for i := 0; i < config.NumberOfScanners; i++ {
-		go scanDevice(config, i, payloadCh)
+		go scanDevice(i, payloadCh)
 	}
 }
 
@@ -170,8 +169,8 @@ func setupLogging(serviceMode bool) {
 
 func main() {
 	svcConfig := &service.Config{
-		Name:        "HIDScannerService",
-		DisplayName: "HID Scanner Service",
+		Name:        "SPCBarcodeService",
+		DisplayName: "SPC Barcode Service",
 		Description: "Service for reading HID scanner output and posting to an API",
 	}
 
