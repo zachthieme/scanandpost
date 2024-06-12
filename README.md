@@ -13,7 +13,8 @@ Create a `config.json` file with the following structure:
 ```json
 {
   "apiEndpoint": "http://example.com/api",
-  "numberOfScanners": 2
+  "numberOfScanners": 2,
+  "rescanInterval": 10
 }
 ```
 
@@ -97,20 +98,21 @@ Assuming you have two HID barcode scanners connected, and you want to post scann
 
    ```json
    {
-     "apiEndpoint": "http://example.com/api",
-     "numberOfScanners": 2
+       "apiEndpoint": "http://example.com/api",
+       "numberOfScanners": 2,
+       "rescanInterval": 10
    }
    ```
 
 2. Build the executable:
 
    ```sh
-   go build -o SPCBarcodeService main.go
+   go build SPCBarcodeService.go
    ```
 
 3. Run the application in interactive mode:
    ```sh
-   SPCBarcodeService
+   SPCBarcodeService interactive
    ```
 
 Or install and start it as a Windows service:
@@ -120,7 +122,6 @@ SPCBarcodeService install
 net start SPCBarcodeService
 ```
 
-### Troubleshooting
+### Open Issues
 
-- **Service Installation Issues**: Ensure you have the necessary permissions to install and manage Windows services.
-- **HID Device Issues**: Verify that the HID barcode scanners are properly connected and recognized by the system.
+- Service fails to start - not sure why it fails as it dies before logging starts up
