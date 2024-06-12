@@ -1,4 +1,5 @@
 {
   "apiEndpoint": "http://example.com/api",
-  "numberOfScanners": 2
+  "numberOfScanners": 2,
+  "rescanInterval": 10
 }
