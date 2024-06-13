@@ -14,7 +14,8 @@ Create a `config.json` file with the following structure:
 {
   "apiEndpoint": "http://example.com/api",
   "numberOfScanners": 2,
-  "rescanInterval": 10
+  "rescanInterval": 10,
+  "keyboard": true
 }
 ```
 
@@ -100,7 +101,8 @@ Assuming you have two HID barcode scanners connected, and you want to post scann
    {
        "apiEndpoint": "http://example.com/api",
        "numberOfScanners": 2,
-       "rescanInterval": 10
+       "rescanInterval": 10,
+       "keyboard": true
    }
    ```
 
