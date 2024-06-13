@@ -116,13 +116,21 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 				break
 			}
 
-			if n > 0 {
-				payload := Payload{
-					ItemID:     string(buf[:n]),
-					DeviceType: fmt.Sprintf("scanner%d", deviceID),
-				}
-				payloadCh <- payload
-			}
+      if n > 0 {
+        // Convert byte buffer to string
+        result := string(buf[:n])
+        // Find the index of "id="
+        idIndex := strings.Index(result, "id=")
+        if idIndex != -1 {
+          //Extract the substring after "id="
+          itemID := result[idIndex+len("id="):]
+          payload := Payload{
+            ItemID:     itemID,
+            DeviceType: fmt.Sprintf("scanner%d", deviceID),
+          }
+          payloadCh <- payload
+        }
+      }
 		}
 	}
 }
