@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -139,11 +140,17 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 func readKeyboardInput(config *Config, payloadCh chan Payload) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		payload := Payload{
-			ItemID:     scanner.Text(),
-			DeviceType: "keyboard",
+		result := scanner.Text()
+		idIndex := strings.Index(result, "id=")
+		if idIndex != -1 {
+			//Extract the substring after "id="
+			itemID := result[idIndex+len("id="):]
+			payload := Payload{
+				ItemID:     itemID,
+				DeviceType: "keyboard",
+			}
+	  	payloadCh <- payload
 		}
-		payloadCh <- payload
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("Error reading standard input: %v\n", err)
