@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -117,27 +117,27 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 				break
 			}
 
-      if n > 0 {
-        // Convert byte buffer to string
-        result := string(buf[:n])
-        // Find the index of "id="
-        idIndex := strings.Index(result, "id=")
-        if idIndex != -1 {
-          //Extract the substring after "id="
-          itemID := result[idIndex+len("id="):]
-          payload := Payload{
-            ItemID:     itemID,
-            DeviceType: fmt.Sprintf("scanner%d", deviceID),
-          }
-          payloadCh <- payload
-        }
-      }
+			if n > 0 {
+				// Convert byte buffer to string
+				result := string(buf[:n])
+				// Find the index of "id="
+				idIndex := strings.Index(result, "id=")
+				if idIndex != -1 {
+					//Extract the substring after "id="
+					itemID := result[idIndex+len("id="):]
+					payload := Payload{
+						ItemID:     itemID,
+						DeviceType: fmt.Sprintf("scanner%d", deviceID),
+					}
+					payloadCh <- payload
+				}
+			}
 		}
 	}
 }
 
 // readKeyboardInput reads keyboard input and sends the payload to the channel
-func readKeyboardInput(config *Config, payloadCh chan Payload) {
+func readKeyboardInput(payloadCh chan Payload) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		result := scanner.Text()
@@ -149,7 +149,7 @@ func readKeyboardInput(config *Config, payloadCh chan Payload) {
 				ItemID:     itemID,
 				DeviceType: "keyboard",
 			}
-	  	payloadCh <- payload
+			payloadCh <- payload
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -163,7 +163,7 @@ func startScanning(config *Config, payloadCh chan Payload) {
 		go scanDevice(config, i, payloadCh)
 	}
 	if config.Keyboard {
-		go readKeyboardInput(config, payloadCh)
+		go readKeyboardInput(payloadCh)
 	}
 }
 
