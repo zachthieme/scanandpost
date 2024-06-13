@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ type Config struct {
 	APIEndpoint      string `json:"apiEndpoint"`
 	NumberOfScanners int    `json:"numberOfScanners"`
 	RescanInterval   int    `json:"rescanInterval"`
+	Keyboard         bool   `json:"keyboard"`
 }
 
 // Payload represents the data to be sent to the API
@@ -125,10 +127,28 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 	}
 }
 
+// readKeyboardInput reads keyboard input and sends the payload to the channel
+func readKeyboardInput(config *Config, payloadCh chan Payload) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		payload := Payload{
+			ItemID:     scanner.Text(),
+			DeviceType: "keyboard",
+		}
+		payloadCh <- payload
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Error reading standard input: %v\n", err)
+	}
+}
+
 // startScanning starts scanning from multiple devices
 func startScanning(config *Config, payloadCh chan Payload) {
 	for i := 0; i < config.NumberOfScanners; i++ {
 		go scanDevice(config, i, payloadCh)
+	}
+	if config.Keyboard {
+		go readKeyboardInput(config, payloadCh)
 	}
 }
 
