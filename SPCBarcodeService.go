@@ -207,6 +207,8 @@ func setupLogging(serviceMode bool) {
 }
 
 func main() {
+	setupLogging(true)
+
 	svcConfig := &service.Config{
 		Name:        "SPCBarcodeService",
 		DisplayName: "SPC Barcode Service",
@@ -236,13 +238,11 @@ func main() {
 			fmt.Println("Service uninstalled successfully.")
 			return
 		case "interactive":
-			setupLogging(false)
 			svc.runService()
 			return
 		}
 	}
 
-	setupLogging(true)
 	err = s.Run()
 	if err != nil {
 		log.Fatalf("Error running service: %v\n", err)
