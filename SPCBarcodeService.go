@@ -31,6 +31,15 @@ type Payload struct {
 	DeviceType string `json:"deviceType"`
 }
 
+func (f *Payload) CleanItemId() {
+	result := f.ItemID
+	idIndex := strings.Index(result, "id=")
+	if idIndex != -1 {
+		//Extract the substring after "id="
+		f.ItemID = result[idIndex+len("id="):]
+	}
+}
+
 // Service represents the Windows service
 type Service struct {
 	wg sync.WaitGroup
@@ -56,6 +65,7 @@ func readConfig() (*Config, error) {
 // postPayload posts the payload to the API
 func postPayload(config *Config, payload Payload) {
 	jsonData, err := json.Marshal(payload)
+	payload.CleanItemId()
 	if err != nil {
 		log.Printf("Error marshaling payload: %v\n", err)
 		logFailure(payload)
@@ -119,18 +129,11 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 
 			if n > 0 {
 				// Convert byte buffer to string
-				result := string(buf[:n])
-				// Find the index of "id="
-				idIndex := strings.Index(result, "id=")
-				if idIndex != -1 {
-					//Extract the substring after "id="
-					itemID := result[idIndex+len("id="):]
-					payload := Payload{
-						ItemID:     itemID,
-						DeviceType: fmt.Sprintf("scanner%d", deviceID),
-					}
-					payloadCh <- payload
+				payload := Payload{
+					ItemID:     string(buf[:n]),
+					DeviceType: fmt.Sprintf("scanner%d", deviceID),
 				}
+				payloadCh <- payload
 			}
 		}
 	}
@@ -140,17 +143,12 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 func readKeyboardInput(payloadCh chan Payload) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		result := scanner.Text()
-		idIndex := strings.Index(result, "id=")
-		if idIndex != -1 {
-			//Extract the substring after "id="
-			itemID := result[idIndex+len("id="):]
-			payload := Payload{
-				ItemID:     itemID,
-				DeviceType: "keyboard",
-			}
-			payloadCh <- payload
+		//Extract the substring after "id="
+		payload := Payload{
+			ItemID:     scanner.Text(),
+			DeviceType: "keyboard",
 		}
+		payloadCh <- payload
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("Error reading standard input: %v\n", err)

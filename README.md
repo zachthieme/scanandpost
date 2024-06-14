@@ -38,6 +38,11 @@ Create a `config.json` file with the following structure:
    ```sh
    go build -o SPCBarcodeService main.go
    ```
+   or if you want to build on mac for windows
+
+```bash
+ env GOOS=windows GOARCH=amd64 go build SPCBarcodeService.go
+```
 
 #### Running the Application
 
@@ -99,10 +104,10 @@ Assuming you have two HID barcode scanners connected, and you want to post scann
 
    ```json
    {
-       "apiEndpoint": "http://example.com/api",
-       "numberOfScanners": 2,
-       "rescanInterval": 10,
-       "keyboard": true
+     "apiEndpoint": "http://example.com/api",
+     "numberOfScanners": 2,
+     "rescanInterval": 10,
+     "keyboard": true
    }
    ```
 
