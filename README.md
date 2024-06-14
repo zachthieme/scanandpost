@@ -35,14 +35,16 @@ Create a `config.json` file with the following structure:
 1. Clone the repository or download the source code.
 2. Navigate to the directory containing `main.go`.
 3. Build the executable:
+
    ```sh
    go build -o SPCBarcodeService main.go
    ```
+
    or if you want to build on mac for windows
 
-```bash
- env GOOS=windows GOARCH=amd64 go build SPCBarcodeService.go
-```
+   ```bash
+   env GOOS=windows GOARCH=amd64 go build SPCBarcodeService.go
+   ```
 
 #### Running the Application
 
