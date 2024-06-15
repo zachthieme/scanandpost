@@ -1,2 +1,6 @@
 service.log
 failures.log
+*.exe
+scanandpost
+SPCBarcodeService
+
