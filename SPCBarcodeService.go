@@ -110,7 +110,7 @@ func logFailure(payload Payload) {
 func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 	for {
 		devices := hid.Enumerate(0, 0)
-		if deviceID >= len(devices)) {
+		if deviceID >= len(devices) {
 			logger.Warnf("No device found for deviceID %d. Rescanning in %d seconds...", deviceID, config.RescanInterval)
 			time.Sleep(time.Duration(config.RescanInterval) * time.Second)
 			continue
@@ -200,7 +200,7 @@ func (s *Service) Stop(svc service.Service) error {
 func setupLogging(serviceMode bool) {
 	logFile, err := os.OpenFile("service.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Fatalf("Error opening log file: %v", err)
+		logger.Fatalf("Error opening log file: %v", err)
 	}
 
 	jsonFormatter := &logrus.JSONFormatter{}
