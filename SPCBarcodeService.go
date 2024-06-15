@@ -88,7 +88,6 @@ func postPayload(config *Config, payload Payload) {
 
 // logFailure logs the payload to the event log and saves it to a file
 func logFailure(payload Payload) {
-	logger.Errorf("Failed to post payload: %v", payload)
 	file, err := os.OpenFile("failures.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		logger.Errorf("Error opening failures.log: %v", err)
