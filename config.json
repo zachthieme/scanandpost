@@ -1,6 +1,6 @@
 {
-  "apiEndpoint": "https://example.com/api",
-  "numberOfScanners": 2,
-  "rescanInterval": 10,
-  "keyboard": true
-}
+		"apiEndpoint": "http://example.com/api",
+		"numberOfScanners": 2,
+		"rescanInterval": 5,
+		"keyboard": true
+	}
