@@ -62,7 +62,10 @@ func readConfig() (*Config, error) {
 	return &config, nil
 }
 
-// postPayload posts the payload to the API
+var httpPost = func(url, contentType string, body io.Reader) (*http.Response, error) {
+	return http.Post(url, contentType, body)
+}
+
 func postPayload(config *Config, payload Payload) {
 	jsonData, err := json.Marshal(payload)
 	payload.CleanItemId()
@@ -72,7 +75,7 @@ func postPayload(config *Config, payload Payload) {
 		return
 	}
 
-	resp, err := http.Post(config.APIEndpoint, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := httpPost(config.APIEndpoint, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Printf("Error posting payload: %v, response code: %v\n", err, resp.StatusCode)
 		logFailure(payload)

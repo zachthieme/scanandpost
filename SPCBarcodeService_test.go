@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"net/http"
@@ -17,7 +16,7 @@ type MockHTTPClient struct {
 	mock.Mock
 }
 
-func (m *MockHTTPClient) Post(url, contentType string, body *bytes.Buffer) (*http.Response, error) {
+func (m *MockHTTPClient) Post(url, contentType string, body io.Reader) (*http.Response, error) {
 	args := m.Called(url, contentType, body)
 	return args.Get(0).(*http.Response), args.Error(1)
 }
@@ -69,9 +68,14 @@ func TestPostPayload_Success(t *testing.T) {
 	payload := Payload{ItemID: "12345", DeviceType: "scanner"}
 	config := &Config{APIEndpoint: "http://example.com/api"}
 
-	client.On("Post", config.APIEndpoint, "application/json", mock.Anything).Return(&http.Response{
+	client.On("Post", config.APIEndpoint, "application/json", mock.AnythingOfType("*bytes.Buffer")).Return(&http.Response{
 		StatusCode: http.StatusOK,
 	}, nil)
+
+	// Temporarily replace the default http.Post function with our mock
+	oldPost := httpPost
+	defer func() { httpPost = oldPost }()
+	httpPost = client.Post
 
 	postPayload(config, payload)
 
@@ -83,9 +87,14 @@ func TestPostPayload_Failure(t *testing.T) {
 	payload := Payload{ItemID: "12345", DeviceType: "scanner"}
 	config := &Config{APIEndpoint: "http://example.com/api"}
 
-	client.On("Post", config.APIEndpoint, "application/json", mock.Anything).Return(&http.Response{
+	client.On("Post", config.APIEndpoint, "application/json", mock.AnythingOfType("*bytes.Buffer")).Return(&http.Response{
 		StatusCode: http.StatusInternalServerError,
 	}, errors.New("post error"))
+
+	// Temporarily replace the default http.Post function with our mock
+	oldPost := httpPost
+	defer func() { httpPost = oldPost }()
+	httpPost = client.Post
 
 	postPayload(config, payload)
 
