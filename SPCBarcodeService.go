@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/karalabe/hid"
 	"github.com/kardianos/service"
+	"github.com/sirupsen/logrus"
 )
 
 // Config represents the configuration for the application
@@ -45,6 +45,8 @@ type Service struct {
 	wg sync.WaitGroup
 }
 
+var logger = logrus.New()
+
 // readConfig reads the configuration from a file
 func readConfig() (*Config, error) {
 	file, err := os.Open("config.json")
@@ -70,37 +72,37 @@ func postPayload(config *Config, payload Payload) {
 	jsonData, err := json.Marshal(payload)
 	payload.CleanItemId()
 	if err != nil {
-		log.Printf("Error marshaling payload: %v\n", err)
+		logger.Errorf("Error marshaling payload: %v", err)
 		logFailure(payload)
 		return
 	}
 
 	resp, err := httpPost(config.APIEndpoint, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Printf("Error posting payload: %v, response code: %v\n", err, resp.StatusCode)
+		logger.Errorf("Error posting payload: %v, response code: %v", err, resp.StatusCode)
 		logFailure(payload)
 		return
 	}
-	log.Printf("Successfully posted payload: %v\n", payload)
+	logger.Infof("Successfully posted payload: %v", payload)
 }
 
 // logFailure logs the payload to the event log and saves it to a file
 func logFailure(payload Payload) {
-	log.Printf("Failed to post payload: %v\n", payload)
+	logger.Errorf("Failed to post payload: %v", payload)
 	file, err := os.OpenFile("failures.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Printf("Error opening failures.log: %v\n", err)
+		logger.Errorf("Error opening failures.log: %v", err)
 		return
 	}
 	defer file.Close()
 	data, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("Error marshaling payload: %v\n", err)
+		logger.Errorf("Error marshaling payload: %v", err)
 		return
 	}
 	_, err = file.WriteString(fmt.Sprintf("%s\n", data))
 	if err != nil {
-		log.Printf("Error writing to failures.log: %v\n", err)
+		logger.Errorf("Error writing to failures.log: %v", err)
 	}
 }
 
@@ -108,15 +110,15 @@ func logFailure(payload Payload) {
 func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 	for {
 		devices := hid.Enumerate(0, 0)
-		if deviceID >= len(devices) {
-			log.Printf("No device found for deviceID %d. Rescanning in %d seconds...\n", deviceID, config.RescanInterval)
+		if deviceID >= len(devices)) {
+			logger.Warnf("No device found for deviceID %d. Rescanning in %d seconds...", deviceID, config.RescanInterval)
 			time.Sleep(time.Duration(config.RescanInterval) * time.Second)
 			continue
 		}
 
 		device, err := devices[deviceID].Open()
 		if err != nil {
-			log.Printf("Error opening device: %v\n", err)
+			logger.Errorf("Error opening device: %v", err)
 			time.Sleep(time.Duration(config.RescanInterval) * time.Second)
 			continue
 		}
@@ -126,7 +128,7 @@ func scanDevice(config *Config, deviceID int, payloadCh chan Payload) {
 		for {
 			n, err := device.Read(buf)
 			if err != nil {
-				log.Printf("Error reading from device: %v\n", err)
+				logger.Errorf("Error reading from device: %v", err)
 				break
 			}
 
@@ -154,7 +156,7 @@ func readKeyboardInput(payloadCh chan Payload) {
 		payloadCh <- payload
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Error reading standard input: %v\n", err)
+		logger.Fatalf("Error reading standard input: %v", err)
 	}
 }
 
@@ -172,7 +174,7 @@ func startScanning(config *Config, payloadCh chan Payload) {
 func (s *Service) runService() {
 	config, err := readConfig()
 	if err != nil {
-		log.Fatalf("Error reading config: %v\n", err)
+		logger.Fatalf("Error reading config: %v", err)
 	}
 	payloadCh := make(chan Payload)
 	go startScanning(config, payloadCh)
@@ -201,11 +203,30 @@ func setupLogging(serviceMode bool) {
 		log.Fatalf("Error opening log file: %v", err)
 	}
 
+	jsonFormatter := &logrus.JSONFormatter{}
+	textFormatter := &logrus.TextFormatter{
+		FullTimestamp: true,
+	}
+
+	fileLogger := logrus.New()
+	fileLogger.SetOutput(logFile)
+	fileLogger.SetFormatter(jsonFormatter)
+
+	consoleLogger := logrus.New()
+	consoleLogger.SetOutput(os.Stdout)
+	consoleLogger.SetFormatter(textFormatter)
+
+	logger.SetOutput(io.MultiWriter(logFile, os.Stdout))
+	logger.SetFormatter(jsonFormatter)
+
 	if serviceMode {
-		log.SetOutput(logFile)
+		logger.SetLevel(logrus.InfoLevel)
+		fileLogger.SetLevel(logrus.InfoLevel)
+		consoleLogger.SetLevel(logrus.InfoLevel)
 	} else {
-		mw := io.MultiWriter(os.Stdout, logFile)
-		log.SetOutput(mw)
+		logger.SetLevel(logrus.DebugLevel)
+		fileLogger.SetLevel(logrus.DebugLevel)
+		consoleLogger.SetLevel(logrus.DebugLevel)
 	}
 }
 
@@ -221,7 +242,7 @@ func main() {
 	svc := &Service{}
 	s, err := service.New(svc, svcConfig)
 	if err != nil {
-		log.Fatalf("Error creating service: %v\n", err)
+		logger.Fatalf("Error creating service: %v", err)
 	}
 
 	if len(os.Args) > 1 {
@@ -229,14 +250,14 @@ func main() {
 		case "install":
 			err = s.Install()
 			if err != nil {
-				log.Fatalf("Error installing service: %v\n", err)
+				logger.Fatalf("Error installing service: %v", err)
 			}
 			fmt.Println("Service installed successfully.")
 			return
 		case "uninstall":
 			err = s.Uninstall()
 			if err != nil {
-				log.Fatalf("Error uninstalling service: %v\n", err)
+				logger.Fatalf("Error uninstalling service: %v", err)
 			}
 			fmt.Println("Service uninstalled successfully.")
 			return
@@ -248,6 +269,6 @@ func main() {
 
 	err = s.Run()
 	if err != nil {
-		log.Fatalf("Error running service: %v\n", err)
+		logger.Fatalf("Error running service: %v", err)
 	}
 }
