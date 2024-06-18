@@ -39,7 +39,7 @@ func TestReadConfig(t *testing.T) {
 		"keyboard": true
 	}`
 	os.WriteFile("config.json", []byte(configContent), 0644)
-	defer os.Remove("config.json")
+	// defer os.Remove("config.json")
 
 	config, err := readConfig()
 	assert.NoError(t, err)
